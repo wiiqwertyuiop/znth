@@ -21,7 +21,7 @@ type VerticalSlider struct {
 type verticalSliderRenderer struct {
 	slider  *VerticalSlider
 	track   *canvas.Rectangle
-	thumb   *canvas.Circle
+	thumb   *canvas.Rectangle
 	objects []fyne.CanvasObject
 }
 
@@ -41,10 +41,10 @@ func (r *verticalSliderRenderer) Layout(size fyne.Size) {
 
 	y := size.Height - float32(pct)*size.Height
 
-	r.thumb.Resize(fyne.NewSize(20, 20))
+	r.thumb.Resize(fyne.NewSize(20, 10))
 	r.thumb.Move(fyne.NewPos(
 		(size.Width-20)/2,
-		y-10,
+		y,
 	))
 }
 
@@ -105,7 +105,7 @@ func NewVerticalSlider(min, max float64, init float64) *VerticalSlider {
 func (s *VerticalSlider) CreateRenderer() fyne.WidgetRenderer {
 	track := canvas.NewRectangle(color.Gray{Y: 100})
 
-	thumb := canvas.NewCircle(color.White)
+	thumb := canvas.NewRectangle(color.White)
 	thumb.StrokeColor = color.Black
 	thumb.StrokeWidth = 1
 
