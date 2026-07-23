@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"znth/audio"
 	"znth/components"
 
@@ -8,6 +9,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/gordonklaus/portaudio"
@@ -19,6 +21,8 @@ var info = widget.NewLabel("Nothing loaded...")
 var mixers = container.NewHBox()
 
 var w fyne.Window
+
+var playAction *widget.ToolbarAction
 
 func main() {
 
@@ -54,7 +58,7 @@ func createLayout() *fyne.Container {
 		toolbarBorder,
 		nil,
 		nil,
-		components.CreateToolbar(w, mixers),
+		createToolbar(w, mixers),
 	)
 
 	// Setlist data
@@ -109,5 +113,47 @@ func createLayout() *fyne.Container {
 		nil,
 		nil,
 		split,
+	)
+}
+
+func createToolbar(w fyne.Window, mixers *fyne.Container) *widget.Toolbar {
+	playAction = widget.NewToolbarAction(theme.MediaPlayIcon(), func() {
+		components.PlayAction()
+		if audio.IsPlaying() {
+			playAction.SetIcon(theme.MediaPauseIcon())
+		} else {
+			playAction.SetIcon(theme.MediaPlayIcon())
+		}
+	})
+	return widget.NewToolbar(
+		widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
+			dialog.NewFolderOpen(func(reader fyne.ListableURI, err error) {
+
+				if err != nil {
+					fmt.Println("Folder selection error:", err)
+					return
+				}
+
+				if reader == nil {
+					fmt.Println("Folder selection cancelled")
+					return
+				}
+
+				audio.KillStream()
+				mixers.RemoveAll()
+				playAction.SetIcon(theme.MediaPlayIcon())
+
+				components.LoadProjectFolder(reader.Path(), mixers) // Todo
+				info.SetText("Loaded " + reader.Path())
+			}, w).Show()
+		}),
+		widget.NewToolbarAction(theme.FileApplicationIcon(), func() {}),
+		widget.NewToolbarAction(theme.DocumentSaveIcon(), func() {}),
+		widget.NewToolbarSeparator(),
+		playAction,
+		widget.NewToolbarAction(theme.MediaStopIcon(), func() {
+			components.StopAction()
+			playAction.SetIcon(theme.MediaPlayIcon())
+		}),
 	)
 }

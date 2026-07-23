@@ -1,7 +1,6 @@
 package components
 
 import (
-	"fmt"
 	"image/color"
 	"os"
 	"path/filepath"
@@ -12,74 +11,21 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
-var playing = false
 var stems []model.Stem
-var playAction *widget.ToolbarAction
 
-func CreateToolbar(w fyne.Window, mixers *fyne.Container) *widget.Toolbar {
-	playAction = widget.NewToolbarAction(theme.MediaPlayIcon(), func() {
-		if !audio.IsStreamActive() {
-			audio.StartStream(stems)
-		}
-		if !playing {
-			audio.Play()
-			playAction.SetIcon(theme.MediaPauseIcon())
-			playing = true
-		} else {
-			audio.Pause()
-			playAction.SetIcon(theme.MediaPlayIcon())
-			playing = false
-		}
-	})
-
-	toolbar := widget.NewToolbar(
-		widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
-			dialog.NewFolderOpen(func(reader fyne.ListableURI, err error) {
-
-				if err != nil {
-					fmt.Println("Folder selection error:", err)
-					return
-				}
-
-				if reader == nil {
-					fmt.Println("Folder selection cancelled")
-					return
-				}
-
-				if audio.IsStreamActive() {
-					audio.KillStream()
-					mixers.RemoveAll()
-					stems = nil
-					audio.SetMusicPosition(0)
-					playAction.SetIcon(theme.MediaPlayIcon())
-				}
-				stems = loadProjectFolder(reader.Path(), mixers)
-				//info.SetText("Loaded " + reader.Path())
-			}, w).Show()
-		}),
-		widget.NewToolbarAction(theme.FileApplicationIcon(), func() {}),
-		widget.NewToolbarAction(theme.DocumentSaveIcon(), func() {}),
-		widget.NewToolbarSeparator(),
-		playAction,
-		widget.NewToolbarAction(theme.MediaStopIcon(), func() {
-			if playing {
-				// MAKE SHARED
-				audio.Pause()
-				playAction.SetIcon(theme.MediaPlayIcon())
-				playing = false
-			}
-			audio.SetMusicPosition(0)
-		}),
-	)
-	return toolbar
+func PlayAction() {
+	audio.TogglePlay()
 }
 
-func loadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
+func StopAction() {
+	audio.Pause()
+	audio.SetMusicPosition(0)
+}
+
+func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 	files, err := os.ReadDir(folder)
 	if err != nil {
 		panic(err)
@@ -194,5 +140,7 @@ func loadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 		}
 	}
 	mixers.Refresh()
+	audio.StartStream(stems)
+	audio.Pause()
 	return stems
 }

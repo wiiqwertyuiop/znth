@@ -17,6 +17,10 @@ var masterVolume float32 = 0.2
 
 var stream *portaudio.Stream = nil
 
+var finishedChan = make(chan bool)
+
+var playing = false
+
 func StartStream(stems []model.Stem) {
 
 	var err error
@@ -27,6 +31,21 @@ func StartStream(stems []model.Stem) {
 		512,
 		func(out []float32) {
 
+			// Check if playback finished
+			if position >= len(stems[0].Data) {
+				for i := range out {
+					out[i] = 0
+				}
+
+				// Notify the goroutine
+				select {
+				case finishedChan <- true:
+				default:
+				}
+
+				return
+			}
+
 			for i := 0; i < len(out); i += 2 {
 
 				var left float32
@@ -35,10 +54,8 @@ func StartStream(stems []model.Stem) {
 				for _, val := range stems {
 
 					if position+1 < len(val.Data) {
-
 						left += val.Data[position] * val.VolumeAdjust
 						right += val.Data[position+1] * val.VolumeAdjust
-
 					}
 				}
 
@@ -54,6 +71,13 @@ func StartStream(stems []model.Stem) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Wait for playback to finish without blocking audio
+	go func() {
+		<-finishedChan
+
+		KillStream()
+	}()
 }
 
 func SetMusicPosition(pos int) {
@@ -69,11 +93,25 @@ func IsStreamActive() bool {
 }
 
 func Play() {
+	playing = true
 	stream.Start()
 }
 
 func Pause() {
+	playing = false
 	stream.Stop()
+}
+
+func TogglePlay() {
+	if !playing {
+		Play()
+	} else {
+		Pause()
+	}
+}
+
+func IsPlaying() bool {
+	return playing
 }
 
 func LoadWavFloat32(filename string) ([]float32, model.WavInfo, error) {
@@ -184,5 +222,6 @@ func KillStream() {
 		stream.Stop()
 		stream.Close()
 		stream = nil
+		position = 0
 	}
 }
