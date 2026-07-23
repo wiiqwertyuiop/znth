@@ -15,9 +15,12 @@ import (
 var position = 0
 var masterVolume float32 = 0.2
 
-func StartStream(stems []model.Stem) *portaudio.Stream {
+var stream *portaudio.Stream = nil
 
-	stream, err := portaudio.OpenDefaultStream(
+func StartStream(stems []model.Stem) {
+
+	var err error
+	stream, err = portaudio.OpenDefaultStream(
 		0, // input channels
 		2, // stereo
 		float64(stems[0].Info.SampleRate),
@@ -51,8 +54,6 @@ func StartStream(stems []model.Stem) *portaudio.Stream {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	return stream
 }
 
 func SetMusicPosition(pos int) {
@@ -61,6 +62,18 @@ func SetMusicPosition(pos int) {
 
 func SetMasterVolume(vol float32) {
 	masterVolume = vol
+}
+
+func IsStreamActive() bool {
+	return stream != nil
+}
+
+func Play() {
+	stream.Start()
+}
+
+func Pause() {
+	stream.Stop()
 }
 
 func LoadWavFloat32(filename string) ([]float32, model.WavInfo, error) {
@@ -164,4 +177,12 @@ READ_DATA:
 	}
 
 	return samples, info, nil
+}
+
+func KillStream() {
+	if stream != nil {
+		stream.Stop()
+		stream.Close()
+		stream = nil
+	}
 }
