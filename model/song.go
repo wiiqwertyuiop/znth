@@ -10,5 +10,5 @@ type Setlist struct {
 }
 
 type SongSave struct {
-	Stems map[int]SavedStemData
+	Stems map[string]SavedStemData
 }

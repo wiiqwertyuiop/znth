@@ -36,7 +36,7 @@ func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 	savedData, _ := LoadStemData(folder)
 	savedStemData := savedData.Stems
 
-	savedMasterVolume, exists := savedStemData[0]
+	savedMasterVolume, exists := savedStemData["0"]
 	masterVolume := audio.SliderToGain(30.0 / 100)
 	if exists {
 		masterVolume = savedMasterVolume.VolumeAdjust
@@ -84,10 +84,12 @@ func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 
 	mixers.Add(channel)
 
-	for id, file := range files {
+	for _, file := range files {
 		if file.IsDir() {
 			continue
 		}
+
+		// TODO: what about none wav files?
 
 		if strings.ToLower(filepath.Ext(file.Name())) == ".wav" {
 			fullPath := filepath.Join(folder, file.Name())
@@ -99,7 +101,7 @@ func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 
 			index := len(stems)
 
-			savedVolume, exists := savedStemData[id]
+			savedVolume, exists := savedStemData[file.Name()]
 			defaultVolume := audio.SliderToGain(50.0 / 100.0)
 			if exists {
 				defaultVolume = savedVolume.VolumeAdjust
@@ -107,7 +109,7 @@ func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 
 			volume := NewVerticalSlider(0, 100, audio.GainToSlider(defaultVolume)*100)
 			stem := model.Stem{
-				Id:           id,
+				Id:           file.Name(),
 				Data:         data,
 				Info:         info,
 				VolumeAdjust: defaultVolume,
@@ -165,7 +167,7 @@ func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 
 func SaveStemData(path string) error {
 	project := model.SongSave{
-		Stems: make(map[int]model.SavedStemData),
+		Stems: make(map[string]model.SavedStemData),
 	}
 
 	for _, stem := range stems {
@@ -175,7 +177,7 @@ func SaveStemData(path string) error {
 	}
 
 	// Save master volume
-	project.Stems[0] = model.SavedStemData{
+	project.Stems["0"] = model.SavedStemData{
 		VolumeAdjust: audio.GetMasterVolume(),
 	}
 

@@ -1,7 +1,7 @@
 package model
 
 type Stem struct {
-	Id           int
+	Id           string
 	Data         []float32
 	Info         WavInfo
 	VolumeAdjust float32
