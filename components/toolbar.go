@@ -3,6 +3,7 @@ package components
 import (
 	"encoding/json"
 	"image/color"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,6 +27,7 @@ func StopAction() {
 	audio.SetMusicPosition(0)
 }
 
+// TODO: MOVE ALL THIS
 func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 	files, err := os.ReadDir(folder)
 	if err != nil {
@@ -76,7 +78,7 @@ func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 		container.NewBorder(
 			nil,
 			nameLabel,
-			nil,
+			createMeterTicks(),
 			nil,
 			volume,
 		),
@@ -128,12 +130,12 @@ func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 			border.StrokeColor = color.Black
 			border.StrokeWidth = 1
 
-			// TODO: Determine track color
+			// Determine track color
 			bg := canvas.NewRectangle(determineTrackColor(file.Name()))
 
 			label := container.NewPadded(widget.NewLabel(strings.TrimSuffix(file.Name(), ".wav")))
 
-			nameLabel := container.NewMax(
+			nameLabel := container.NewStack(
 				bg,
 				label,
 			)
@@ -143,7 +145,7 @@ func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 				container.NewBorder(
 					nil,
 					nameLabel,
-					nil,
+					createMeterTicks(),
 					nil,
 					volume,
 				),
@@ -259,4 +261,27 @@ func determineTrackColor(name string) color.Color {
 		B: 255,
 		A: 100,
 	}
+}
+
+func createMeterTicks() fyne.CanvasObject {
+	ticks := container.NewWithoutLayout()
+
+	levels := []float32{10, 57, 105, 152, 200, 238, 277, 316, 355}
+
+	for _, y := range levels {
+		line := canvas.NewLine(color.RGBA{R: 255, G: 255, B: 255, A: 100})
+		line.StrokeWidth = 3
+		line.Position1 = fyne.NewPos(0, y)
+		if math.Mod(float64(y), 2) != 0 {
+			line.Position2 = fyne.NewPos(7, y)
+		} else {
+			line.Position2 = fyne.NewPos(12, y)
+		}
+
+		ticks.Add(line)
+	}
+
+	ticks.Resize(fyne.NewSize(10, 100))
+
+	return ticks
 }
