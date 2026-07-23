@@ -62,21 +62,26 @@ func SaveSetlist(writer fyne.URIWriteCloser) error {
 	return nil
 }
 
-func OpenSetlist(reader fyne.URIReadCloser) {
+func OpenSetlist(reader fyne.URIReadCloser) error {
+	if reader == nil {
+		return errors.New("Action canceled")
+	}
+
 	defer reader.Close()
 
 	data, err := io.ReadAll(reader)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	var setlist model.Setlist
 	err = json.Unmarshal(data, &setlist)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	songNames = setlist.Data
+	return nil
 }
 
 func GetSong(id int) model.SongDetails {

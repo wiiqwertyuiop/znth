@@ -5,6 +5,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -21,7 +22,7 @@ type VerticalSlider struct {
 type verticalSliderRenderer struct {
 	slider  *VerticalSlider
 	track   *canvas.Rectangle
-	thumb   *canvas.Rectangle
+	thumb   *fyne.Container
 	objects []fyne.CanvasObject
 }
 
@@ -41,10 +42,10 @@ func (r *verticalSliderRenderer) Layout(size fyne.Size) {
 
 	y := size.Height - float32(pct)*size.Height
 
-	r.thumb.Resize(fyne.NewSize(20, 10))
+	r.thumb.Resize(fyne.NewSize(25, 50))
 	r.thumb.Move(fyne.NewPos(
-		(size.Width-20)/2,
-		y,
+		(size.Width-25)/2,
+		y-20,
 	))
 }
 
@@ -104,11 +105,21 @@ func NewVerticalSlider(min, max float64, init float64) *VerticalSlider {
 }
 
 func (s *VerticalSlider) CreateRenderer() fyne.WidgetRenderer {
-	track := canvas.NewRectangle(color.Gray{Y: 100})
+	track := canvas.NewRectangle(color.RGBA{R: 255, G: 255, B: 255, A: 80})
 
-	thumb := canvas.NewRectangle(color.White)
-	thumb.StrokeColor = color.Black
-	thumb.StrokeWidth = 1
+	rect := canvas.NewRectangle(color.RGBA{R: 255, G: 255, B: 255, A: 200})
+	rect.CornerRadius = 10
+	rect.Resize(fyne.NewSize(25, 50))
+
+	line := canvas.NewLine(color.Black)
+	line.StrokeWidth = 3
+	line.Position1 = fyne.NewPos(0, 25)
+	line.Position2 = fyne.NewPos(25, 25)
+
+	thumb := container.NewWithoutLayout(
+		rect,
+		line,
+	)
 
 	return &verticalSliderRenderer{
 		slider: s,

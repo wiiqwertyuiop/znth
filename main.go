@@ -100,14 +100,7 @@ func createLayout() *fyne.Container {
 }
 
 func createToolbar() *widget.Toolbar {
-	playAction = widget.NewToolbarAction(theme.MediaPlayIcon(), func() {
-		components.PlayAction()
-		if audio.IsPlaying() {
-			playAction.SetIcon(theme.MediaPauseIcon())
-		} else {
-			playAction.SetIcon(theme.MediaPlayIcon())
-		}
-	})
+	playAction = widget.NewToolbarAction(theme.MediaPlayIcon(), play)
 
 	return widget.NewToolbar(
 		widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
@@ -148,8 +141,10 @@ func createToolbar() *widget.Toolbar {
 		widget.NewToolbarSeparator(),
 		playAction,
 		widget.NewToolbarAction(theme.MediaStopIcon(), func() {
-			components.StopAction()
-			playAction.SetIcon(theme.MediaPlayIcon())
+			if audio.IsStreamActive() {
+				components.StopAction()
+				playAction.SetIcon(theme.MediaPlayIcon())
+			}
 		}),
 	)
 }
@@ -168,15 +163,33 @@ func loadSong(path string) {
 }
 
 func addShortCuts() {
-	shortcut := &desktop.CustomShortcut{
+	ctrlS_Shortcut := &desktop.CustomShortcut{
 		KeyName:  fyne.KeyS,
 		Modifier: fyne.KeyModifierControl,
 	}
 
-	w.Canvas().AddShortcut(shortcut, func(shortcut fyne.Shortcut) {
+	w.Canvas().AddShortcut(ctrlS_Shortcut, func(shortcut fyne.Shortcut) {
 		if currentSongPath != "" {
 			components.SaveStemData(currentSongPath)
 			info.SetText("Saved stem levels!")
 		}
 	})
+
+	w.Canvas().SetOnTypedKey(func(ev *fyne.KeyEvent) {
+		switch ev.Name {
+		case fyne.KeySpace:
+			play()
+		}
+	})
+}
+
+func play() {
+	if audio.IsStreamActive() {
+		components.PlayAction()
+		if audio.IsPlaying() {
+			playAction.SetIcon(theme.MediaPauseIcon())
+		} else {
+			playAction.SetIcon(theme.MediaPlayIcon())
+		}
+	}
 }

@@ -129,14 +129,9 @@ func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 			border.StrokeWidth = 1
 
 			// TODO: Determine track color
-			bg := canvas.NewRectangle(color.NRGBA{
-				R: 144,
-				G: 238,
-				B: 144,
-				A: 144,
-			})
+			bg := canvas.NewRectangle(determineTrackColor(file.Name()))
 
-			label := container.NewPadded(widget.NewLabel(file.Name()))
+			label := container.NewPadded(widget.NewLabel(strings.TrimSuffix(file.Name(), ".wav")))
 
 			nameLabel := container.NewMax(
 				bg,
@@ -209,4 +204,59 @@ func LoadStemData(path string) (model.SongSave, error) {
 	}
 
 	return project, nil
+}
+
+func determineTrackColor(name string) color.Color {
+	name = strings.ToLower(name)
+	if strings.Contains(name, "bass") {
+		return color.NRGBA{
+			R: 128,
+			G: 0,
+			B: 128,
+			A: 200,
+		}
+	}
+
+	if strings.Contains(name, "guitar") {
+		return color.NRGBA{
+			R: 0,
+			G: 0,
+			B: 128,
+			A: 200,
+		}
+	}
+
+	if strings.Contains(name, "drums") {
+		return color.NRGBA{
+			R: 255,
+			G: 255,
+			B: 0,
+			A: 100,
+		}
+	}
+
+	if strings.Contains(name, "vocals") {
+		return color.NRGBA{
+			R: 255,
+			G: 165,
+			B: 0,
+			A: 200,
+		}
+	}
+
+	if strings.Contains(name, "synth") {
+		return color.NRGBA{
+			R: 144,
+			G: 238,
+			B: 144,
+			A: 144,
+		}
+	}
+
+	return color.NRGBA{
+		R: 255,
+		G: 255,
+		B: 255,
+		A: 100,
+	}
 }
