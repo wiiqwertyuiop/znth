@@ -1,6 +1,7 @@
 package audio
 
 import (
+	"math"
 	"znth/model"
 
 	"encoding/binary"
@@ -13,7 +14,7 @@ import (
 )
 
 var position = 0
-var masterVolume float32 = 0.2
+var masterVolume float32 = SliderToGain(30.0 / 100.0)
 
 var stream *portaudio.Stream = nil
 
@@ -60,8 +61,8 @@ func StartStream(stems []model.Stem) {
 				}
 
 				// master volume
-				out[i] = left * masterVolume
-				out[i+1] = right * masterVolume
+				out[i] = float32(math.Tanh(float64(left * masterVolume)))
+				out[i+1] = float32(math.Tanh(float64(right * masterVolume)))
 
 				position += 2
 			}
@@ -82,6 +83,10 @@ func StartStream(stems []model.Stem) {
 
 func SetMusicPosition(pos int) {
 	position = pos
+}
+
+func GetMasterVolume() float32 {
+	return masterVolume
 }
 
 func SetMasterVolume(vol float32) {

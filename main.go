@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"znth/audio"
 	"znth/components"
 
@@ -10,19 +9,22 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/gordonklaus/portaudio"
 )
 
-var projectFolder string
-var info = widget.NewLabel("Nothing loaded...")
-
-var mixers = container.NewHBox()
-
 var w fyne.Window
 
+// Can these be moved?
 var playAction *widget.ToolbarAction
+var setlist *widget.List
+var mixers = container.NewHBox()
+
+var info = widget.NewLabel("Nothing loaded...") // global?
+
+var currentSongPath string = ""
 
 func main() {
 
@@ -36,6 +38,7 @@ func main() {
 
 	// Create window
 	w = a.NewWindow("Backing Track")
+	addShortCuts()
 	w.SetContent(createLayout())
 	w.CenterOnScreen()
 	w.RequestFocus()
@@ -46,7 +49,7 @@ func main() {
 func createLayout() *fyne.Container {
 
 	// Borders
-	toolbarBorder := canvas.NewLine(theme.SeparatorColor())
+	toolbarBorder := canvas.NewLine(theme.SeparatorColor()) // TODO
 	statusBorder := canvas.NewLine(theme.SeparatorColor())
 
 	toolbarBorder.StrokeWidth = 1
@@ -58,35 +61,24 @@ func createLayout() *fyne.Container {
 		toolbarBorder,
 		nil,
 		nil,
-		createToolbar(w, mixers),
+		createToolbar(),
 	)
-
-	// Setlist data
-	songNames := []string{
-		"Song One",
-		"Song Two",
-		"Very Long Song Name That Could Overflow",
-		"Another Song",
-		"Song Five",
-		"Song Six",
-		"Song Seven",
-		"Song Eight",
-	}
 
 	// Setlist
-	setlist := widget.NewList(
-		func() int {
-			return len(songNames)
-		},
-		func() fyne.CanvasObject {
-			label := widget.NewLabel("")
-			label.Wrapping = fyne.TextTruncate
-			return label
-		},
-		func(i widget.ListItemID, o fyne.CanvasObject) {
-			o.(*widget.Label).SetText(songNames[i])
-		},
+	setlist = components.CreateSetlist()
+	setlist.OnSelected = func(id widget.ListItemID) {
+		path := components.GetSong(id).Location
+		loadSong(path)
+	}
+
+	// Split view
+	split := container.NewHSplit(
+		setlist,
+		container.NewScroll(mixers),
 	)
+
+	// Start with left panel at 20% width
+	split.SetOffset(0.20)
 
 	// Status bar
 	statusBar := container.NewBorder(
@@ -96,15 +88,6 @@ func createLayout() *fyne.Container {
 		nil,
 		info,
 	)
-
-	// Split view
-	split := container.NewHSplit(
-		setlist,
-		container.NewScroll(mixers),
-	)
-
-	// Start with left panel at 25% width
-	split.SetOffset(0.25)
 
 	// Full window layout
 	return container.NewBorder(
@@ -116,7 +99,7 @@ func createLayout() *fyne.Container {
 	)
 }
 
-func createToolbar(w fyne.Window, mixers *fyne.Container) *widget.Toolbar {
+func createToolbar() *widget.Toolbar {
 	playAction = widget.NewToolbarAction(theme.MediaPlayIcon(), func() {
 		components.PlayAction()
 		if audio.IsPlaying() {
@@ -125,30 +108,43 @@ func createToolbar(w fyne.Window, mixers *fyne.Container) *widget.Toolbar {
 			playAction.SetIcon(theme.MediaPlayIcon())
 		}
 	})
+
 	return widget.NewToolbar(
 		widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
 			dialog.NewFolderOpen(func(reader fyne.ListableURI, err error) {
 
 				if err != nil {
-					fmt.Println("Folder selection error:", err)
+					info.SetText("Folder selection error: " + err.Error())
 					return
 				}
 
 				if reader == nil {
-					fmt.Println("Folder selection cancelled")
+					info.SetText("Folder selection cancelled")
 					return
 				}
-
-				audio.KillStream()
-				mixers.RemoveAll()
-				playAction.SetIcon(theme.MediaPlayIcon())
-
-				components.LoadProjectFolder(reader.Path(), mixers) // Todo
-				info.SetText("Loaded " + reader.Path())
+				loadSong(reader.Path())
+				components.AddToSetlist(reader)
+				setlist.Refresh()
 			}, w).Show()
 		}),
-		widget.NewToolbarAction(theme.FileApplicationIcon(), func() {}),
-		widget.NewToolbarAction(theme.DocumentSaveIcon(), func() {}),
+		widget.NewToolbarAction(theme.FileApplicationIcon(), func() {
+			dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
+				components.OpenSetlist(reader)
+				setlist.Refresh()
+			}, w).Show()
+		}),
+		widget.NewToolbarAction(theme.DocumentSaveIcon(), func() {
+			dialog.NewFileSave(func(writer fyne.URIWriteCloser, err error) {
+				if err != nil {
+					info.SetText("Save error: " + err.Error())
+					return
+				}
+				e := components.SaveSetlist(writer) // TODO
+				if e != nil {
+					info.SetText(e.Error())
+				}
+			}, w).Show()
+		}),
 		widget.NewToolbarSeparator(),
 		playAction,
 		widget.NewToolbarAction(theme.MediaStopIcon(), func() {
@@ -156,4 +152,31 @@ func createToolbar(w fyne.Window, mixers *fyne.Container) *widget.Toolbar {
 			playAction.SetIcon(theme.MediaPlayIcon())
 		}),
 	)
+}
+
+func loadSong(path string) {
+	audio.KillStream()
+	mixers.RemoveAll()
+	playAction.SetIcon(theme.MediaPlayIcon())
+
+	info.SetText("Loading files... " + path)
+
+	components.LoadProjectFolder(path, mixers) // Todo
+	currentSongPath = path
+
+	info.SetText("Loaded succesfully! " + path)
+}
+
+func addShortCuts() {
+	shortcut := &desktop.CustomShortcut{
+		KeyName:  fyne.KeyS,
+		Modifier: fyne.KeyModifierControl,
+	}
+
+	w.Canvas().AddShortcut(shortcut, func(shortcut fyne.Shortcut) {
+		if currentSongPath != "" {
+			components.SaveStemData(currentSongPath)
+			info.SetText("Saved stem levels!")
+		}
+	})
 }

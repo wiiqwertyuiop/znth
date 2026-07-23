@@ -57,6 +57,7 @@ func (r *verticalSliderRenderer) Objects() []fyne.CanvasObject {
 }
 
 func (s *VerticalSlider) DragEnd() {}
+
 func (r *verticalSliderRenderer) Refresh() {
 	r.Layout(r.slider.Size())
 

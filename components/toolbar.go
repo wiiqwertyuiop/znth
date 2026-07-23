@@ -1,6 +1,7 @@
 package components
 
 import (
+	"encoding/json"
 	"image/color"
 	"os"
 	"path/filepath"
@@ -31,10 +32,20 @@ func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 		panic(err)
 	}
 
+	stems = stems[:0]
+	savedData, _ := LoadStemData(folder)
+	savedStemData := savedData.Stems
+
+	savedMasterVolume, exists := savedStemData[0]
+	masterVolume := audio.SliderToGain(30.0 / 100)
+	if exists {
+		masterVolume = savedMasterVolume.VolumeAdjust
+		audio.SetMasterVolume(savedMasterVolume.VolumeAdjust)
+	}
 	// Master Volume
-	volume := NewVerticalSlider(0, 100, 20)
+	volume := NewVerticalSlider(0, 100, audio.GainToSlider(masterVolume)*100)
 	volume.OnChanged = func(v float64) {
-		audio.SetMasterVolume(float32(v / 50))
+		audio.SetMasterVolume(audio.SliderToGain(v / 100.0))
 	}
 
 	border := canvas.NewRectangle(color.NRGBA{
@@ -73,8 +84,7 @@ func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 
 	mixers.Add(channel)
 
-	var stems []model.Stem
-	for _, file := range files {
+	for id, file := range files {
 		if file.IsDir() {
 			continue
 		}
@@ -89,15 +99,22 @@ func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 
 			index := len(stems)
 
-			volume := NewVerticalSlider(0, 100, 50)
+			savedVolume, exists := savedStemData[id]
+			defaultVolume := audio.SliderToGain(50.0 / 100.0)
+			if exists {
+				defaultVolume = savedVolume.VolumeAdjust
+			}
+
+			volume := NewVerticalSlider(0, 100, audio.GainToSlider(defaultVolume)*100)
 			stem := model.Stem{
+				Id:           id,
 				Data:         data,
 				Info:         info,
-				VolumeAdjust: 1,
+				VolumeAdjust: defaultVolume,
 			}
 
 			volume.OnChanged = func(v float64) {
-				stems[index].VolumeAdjust = float32(v / 50)
+				stems[index].VolumeAdjust = audio.SliderToGain(v / 100.0)
 			}
 
 			border := canvas.NewRectangle(color.NRGBA{
@@ -109,6 +126,7 @@ func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 			border.StrokeColor = color.Black
 			border.StrokeWidth = 1
 
+			// TODO: Determine track color
 			bg := canvas.NewRectangle(color.NRGBA{
 				R: 144,
 				G: 238,
@@ -143,4 +161,50 @@ func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 	audio.StartStream(stems)
 	audio.Pause()
 	return stems
+}
+
+func SaveStemData(path string) error {
+	project := model.SongSave{
+		Stems: make(map[int]model.SavedStemData),
+	}
+
+	for _, stem := range stems {
+		project.Stems[stem.Id] = model.SavedStemData{
+			VolumeAdjust: stem.VolumeAdjust,
+		}
+	}
+
+	// Save master volume
+	project.Stems[0] = model.SavedStemData{
+		VolumeAdjust: audio.GetMasterVolume(),
+	}
+
+	data, err := json.MarshalIndent(project, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path+"/config.json", data, 0644)
+}
+
+func LoadStemData(path string) (model.SongSave, error) {
+	var project model.SongSave
+
+	filename := path + "/config.json"
+
+	_, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return project, nil
+	}
+
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return project, err
+	}
+
+	err = json.Unmarshal(data, &project)
+	if err != nil {
+		return project, err
+	}
+
+	return project, nil
 }
