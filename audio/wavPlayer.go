@@ -245,9 +245,11 @@ func KillStream(state *state.State) {
 }
 
 func Shutdown() {
-	stream.Stop()
-	stream.Close()
-	stream = nil
-	position = 0
+	if IsStreamActive() {
+		stream.Stop()
+		stream.Close()
+		stream = nil
+		position = 0
+	}
 	portaudio.Terminate()
 }
