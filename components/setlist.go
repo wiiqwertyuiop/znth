@@ -62,5 +62,6 @@ func OpenSetlist(reader fyne.URIReadCloser, state *state.State) error {
 	}
 
 	state.Project.SongNames = setlist.Data
+	LoadSong(setlist.Data[0].Location, state)
 	return nil
 }

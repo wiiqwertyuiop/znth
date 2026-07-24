@@ -13,8 +13,6 @@ import (
 	"fyne.io/fyne/v2/theme"
 )
 
-var currentSongPath string = ""
-
 func createLayout(ui ui.UI) *fyne.Container {
 
 	// Borders

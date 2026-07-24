@@ -1,7 +1,7 @@
 package model
 
 type Project struct {
-	Stems           []Stem
+	Channels        Channels
 	CurrentSongPath string
 	SongNames       []SongDetails
 }

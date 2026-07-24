@@ -25,9 +25,8 @@ func openFolderButton(ui ui.UI) *widget.ToolbarAction {
 			}
 			path := reader.Path()
 
-			components.LoadSong(path, ui.State)
-
 			components.AddToSetlist(reader, ui.State)
+			components.LoadSong(path, ui.State)
 		}, ui.Window).Show()
 	})
 }

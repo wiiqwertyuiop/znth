@@ -10,16 +10,17 @@ func LoadSong(path string, state *state.State) {
 	audio.KillStream(state)
 	state.StatusBarTextChange("Loading files... " + path)
 
-	stems := loadProjectFolder(path)
+	channels := loadProjectFolder(path)
 
 	project := model.Project{
-		Stems:           stems,
+		Channels:        channels,
 		CurrentSongPath: path,
+		SongNames:       state.Project.SongNames,
 	}
 
 	state.SetProject(project)
 
-	audio.StartStream(stems, state)
+	audio.StartStream(channels.Stems, state)
 	audio.Pause(state)
 
 	state.StatusBarTextChange("Loaded succesfully! " + path)

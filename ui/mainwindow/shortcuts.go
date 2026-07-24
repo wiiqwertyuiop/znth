@@ -16,8 +16,8 @@ func addShortCuts(ui ui.UI) {
 	}
 
 	ui.Window.Canvas().AddShortcut(ctrlS_Shortcut, func(shortcut fyne.Shortcut) {
-		if currentSongPath != "" {
-			components.SaveStemData(currentSongPath, ui.State.Project.Stems)
+		if ui.State.Project.CurrentSongPath != "" {
+			components.SaveStemData(ui.State.Project.CurrentSongPath, ui.State.Project.Channels.Stems)
 			ui.State.StatusBarTextChange("Saved stem levels!")
 		}
 	})

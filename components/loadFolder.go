@@ -9,13 +9,14 @@ import (
 	"znth/model"
 )
 
-func loadProjectFolder(folder string) []model.Stem {
+func loadProjectFolder(folder string) model.Channels {
 	var stems []model.Stem
+	var channels model.Channels
 
 	files, err := os.ReadDir(folder)
 	if err != nil {
 		//panic(err) // todo
-		return nil
+		return channels
 	}
 
 	savedData, _ := LoadStemData(folder)
@@ -28,14 +29,7 @@ func loadProjectFolder(folder string) []model.Stem {
 		audio.SetMasterVolume(savedMasterVolume.VolumeAdjust)
 	}
 
-	masterStem := model.Stem{
-		Id:           "Master",
-		Data:         nil,
-		Info:         model.WavInfo{},
-		VolumeAdjust: masterVolume,
-	}
-
-	stems = append(stems, masterStem)
+	channels.MasterVolume = masterVolume
 
 	for _, file := range files {
 		if file.IsDir() {
@@ -68,7 +62,8 @@ func loadProjectFolder(folder string) []model.Stem {
 		}
 	}
 
-	return stems
+	channels.Stems = stems
+	return channels
 }
 
 func SaveStemData(path string, stems []model.Stem) error {

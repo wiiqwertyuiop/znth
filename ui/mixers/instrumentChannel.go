@@ -12,7 +12,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func drawInstrument(stem model.Stem) *fyne.Container {
+func drawInstrument(stem *model.Stem) *fyne.Container {
 
 	defaultVolume := stem.VolumeAdjust
 

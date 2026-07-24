@@ -26,10 +26,10 @@ func (s *State) OnStatusBarTextChange(listener func(str string)) {
 }
 
 func (s *State) PlaybackChange(playbackState model.PlaybackState) {
+	s.Playback.State = playbackState
 	for _, listener := range s.playbackListeners {
 		listener(playbackState)
 	}
-	s.Playback.State = playbackState
 }
 
 func (s *State) OnPlaybackChange(listener func(model.PlaybackState)) {
@@ -37,10 +37,10 @@ func (s *State) OnPlaybackChange(listener func(model.PlaybackState)) {
 }
 
 func (s *State) SetProject(project model.Project) {
+	s.Project = project
 	for _, listener := range s.projectListeners {
 		listener(project)
 	}
-	s.Project = project
 }
 
 func (s *State) OnProjectChange(listener func(model.Project)) {

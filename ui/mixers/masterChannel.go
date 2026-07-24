@@ -3,7 +3,6 @@ package mixers
 import (
 	"image/color"
 	"znth/audio"
-	"znth/model"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -11,9 +10,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func drawMaster(stem model.Stem) *fyne.Container {
-
-	masterVolume := stem.VolumeAdjust
+func drawMaster(masterVolume float32) *fyne.Container {
 
 	// Master Volume
 	volume := newVerticalSlider(0, 100, audio.GainToSlider(masterVolume)*100)

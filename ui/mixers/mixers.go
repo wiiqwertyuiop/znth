@@ -12,21 +12,15 @@ func Create(state *state.State) *container.Scroll {
 	mixers := container.NewHBox()
 	state.OnProjectChange(func(p model.Project) {
 		mixers.RemoveAll()
-		drawMixers(mixers, p.Stems)
+		drawMixers(mixers, p.Channels)
 		mixers.Refresh()
 	})
 	return container.NewScroll(mixers)
 }
 
-func drawMixers(mixers *fyne.Container, stems []model.Stem) {
-
-	for _, stem := range stems {
-		var channel *fyne.Container
-		if stem.Id == "Master" {
-			channel = drawMaster(stem)
-		} else {
-			channel = drawInstrument(stem)
-		}
-		mixers.Add(channel)
+func drawMixers(mixers *fyne.Container, channels model.Channels) {
+	mixers.Add(drawMaster(channels.MasterVolume))
+	for i := range channels.Stems {
+		mixers.Add(drawInstrument(&channels.Stems[i]))
 	}
 }

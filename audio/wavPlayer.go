@@ -50,6 +50,7 @@ func StartStream(stems []model.Stem, state *state.State) {
 				return
 			}
 
+			// Start at 1 so we skip the master channel
 			for i := 0; i < len(out); i += 2 {
 
 				var left float32
@@ -102,7 +103,7 @@ func IsStreamActive() bool {
 
 func Play(state *state.State) {
 	if IsStreamActive() {
-		state.PlaybackChange(model.PlaybackPaused)
+		state.PlaybackChange(model.PlaybackPlaying)
 		stream.Start()
 	}
 }

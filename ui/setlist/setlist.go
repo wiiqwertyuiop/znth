@@ -2,6 +2,7 @@ package setlist
 
 import (
 	"znth/components"
+	"znth/model"
 	"znth/state"
 
 	"fyne.io/fyne/v2"
@@ -28,6 +29,8 @@ func Create(state *state.State) *widget.List {
 		path := state.Project.SongNames[id].Location
 		components.LoadSong(path, state)
 	}
-
+	state.OnProjectChange(func(p model.Project) {
+		setlist.Refresh()
+	})
 	return setlist
 }
