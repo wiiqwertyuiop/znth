@@ -22,6 +22,10 @@ var finishedChan = make(chan bool)
 
 var playing = false
 
+func Initialize() {
+	portaudio.Initialize()
+}
+
 func StartStream(stems []model.Stem) {
 
 	var err error
@@ -230,4 +234,9 @@ func KillStream() {
 		position = 0
 		playing = false
 	}
+}
+
+func Shutdown() {
+	KillStream()
+	portaudio.Terminate()
 }
