@@ -31,7 +31,8 @@ func StopAction() {
 func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 	files, err := os.ReadDir(folder)
 	if err != nil {
-		panic(err)
+		//panic(err) // todo
+		return nil
 	}
 
 	stems = stems[:0]
@@ -66,7 +67,9 @@ func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 		A: 144,
 	})
 
-	label := container.NewPadded(widget.NewLabel("Master"))
+	labelText := widget.NewLabel("Master")
+	labelText.TextStyle.Bold = true
+	label := container.NewPadded(labelText)
 
 	nameLabel := container.NewMax(
 		bg,
@@ -91,14 +94,13 @@ func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 			continue
 		}
 
-		// TODO: what about none wav files?
-
 		if strings.ToLower(filepath.Ext(file.Name())) == ".wav" {
 			fullPath := filepath.Join(folder, file.Name())
 			println("Loading... ", fullPath)
 			data, info, err := audio.LoadWavFloat32(fullPath)
 			if err != nil {
-				panic(err)
+				//panic(err) // TODO
+				continue
 			}
 
 			index := len(stems)
@@ -133,7 +135,9 @@ func LoadProjectFolder(folder string, mixers *fyne.Container) []model.Stem {
 			// Determine track color
 			bg := canvas.NewRectangle(determineTrackColor(file.Name()))
 
-			label := container.NewPadded(widget.NewLabel(strings.TrimSuffix(file.Name(), ".wav")))
+			labelText := widget.NewLabel(strings.TrimSuffix(file.Name(), ".wav"))
+			labelText.TextStyle.Bold = true
+			label := container.NewPadded(labelText)
 
 			nameLabel := container.NewStack(
 				bg,

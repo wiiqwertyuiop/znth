@@ -22,6 +22,7 @@ func CreateSetlist() *widget.List {
 		func() fyne.CanvasObject {
 			label := widget.NewLabel("")
 			label.Wrapping = fyne.TextWrap(fyne.TextTruncateClip)
+			label.TextStyle.Bold = true
 			return label
 		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {

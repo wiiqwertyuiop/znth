@@ -228,5 +228,6 @@ func KillStream() {
 		stream.Close()
 		stream = nil
 		position = 0
+		playing = false
 	}
 }
