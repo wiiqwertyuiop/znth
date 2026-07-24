@@ -1,4 +1,4 @@
-package components
+package mixers
 
 import (
 	"image/color"
@@ -94,7 +94,7 @@ func (s *VerticalSlider) Dragged(e *fyne.DragEvent) {
 	s.Refresh()
 }
 
-func NewVerticalSlider(min, max float64, init float64) *VerticalSlider {
+func newVerticalSlider(min, max float64, init float64) *VerticalSlider {
 	s := &VerticalSlider{
 		Min:   min,
 		Max:   max,

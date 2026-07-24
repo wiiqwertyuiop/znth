@@ -3,6 +3,7 @@ package audio
 import (
 	"math"
 	"znth/model"
+	"znth/state"
 
 	"encoding/binary"
 	"fmt"
@@ -20,13 +21,11 @@ var stream *portaudio.Stream = nil
 
 var finishedChan = make(chan bool)
 
-var playing = false
-
 func Initialize() {
 	portaudio.Initialize()
 }
 
-func StartStream(stems []model.Stem) {
+func StartStream(stems []model.Stem, state *state.State) {
 
 	var err error
 	stream, err = portaudio.OpenDefaultStream(
@@ -81,7 +80,7 @@ func StartStream(stems []model.Stem) {
 	go func() {
 		<-finishedChan
 
-		KillStream()
+		KillStream(state)
 	}()
 }
 
@@ -101,26 +100,34 @@ func IsStreamActive() bool {
 	return stream != nil
 }
 
-func Play() {
-	playing = true
-	stream.Start()
-}
-
-func Pause() {
-	playing = false
-	stream.Stop()
-}
-
-func TogglePlay() {
-	if !playing {
-		Play()
-	} else {
-		Pause()
+func Play(state *state.State) {
+	if IsStreamActive() {
+		state.PlaybackChange(model.PlaybackPaused)
+		stream.Start()
 	}
 }
 
-func IsPlaying() bool {
-	return playing
+func Pause(state *state.State) {
+	if IsStreamActive() {
+		state.PlaybackChange(model.PlaybackPaused)
+		stream.Stop()
+	}
+}
+
+func Stop(state *state.State) {
+	if IsStreamActive() {
+		state.PlaybackChange(model.PlaybackStopped)
+		SetMusicPosition(0)
+		stream.Stop()
+	}
+}
+
+func TogglePlay(state *state.State) {
+	if state.Playback.State != model.PlaybackPlaying {
+		Play(state)
+	} else {
+		Pause(state)
+	}
 }
 
 func LoadWavFloat32(filename string) ([]float32, model.WavInfo, error) {
@@ -226,17 +233,20 @@ READ_DATA:
 	return samples, info, nil
 }
 
-func KillStream() {
+func KillStream(state *state.State) {
 	if stream != nil {
 		stream.Stop()
 		stream.Close()
 		stream = nil
 		position = 0
-		playing = false
+		state.PlaybackChange(model.PlaybackStopped)
 	}
 }
 
 func Shutdown() {
-	KillStream()
+	stream.Stop()
+	stream.Close()
+	stream = nil
+	position = 0
 	portaudio.Terminate()
 }
