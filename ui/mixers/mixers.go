@@ -11,14 +11,19 @@ import (
 func Create(state *state.State) *container.Scroll {
 
 	mixers := container.NewHBox()
+	mixersScroll := container.NewScroll(mixers)
 
 	state.OnProjectChange(func(p model.Project) {
 		mixers.RemoveAll()
 		drawMixers(mixers, p.Channels)
 		mixers.Refresh()
+
+		// Reser scroll
+		mixersScroll.Offset = fyne.NewPos(0, 0)
+		mixersScroll.Refresh()
 	})
 
-	return container.NewScroll(mixers)
+	return mixersScroll
 }
 
 func drawMixers(mixers *fyne.Container, channels model.Channels) {
