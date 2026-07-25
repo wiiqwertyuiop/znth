@@ -4,20 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"slices"
 	"znth/model"
 	"znth/state"
 
 	"fyne.io/fyne/v2"
 )
-
-func AddToSetlist(reader fyne.ListableURI, state *state.State) {
-	song := model.SongDetails{
-		Name:     reader.Name(),
-		Location: reader.Path(),
-	}
-	state.Project.SongNames = slices.Insert(state.Project.SongNames, 0, song)
-}
 
 // TODO ERROR HANDLING, CHECK NIL, ETC.
 func SaveSetlist(writer fyne.URIWriteCloser, state *state.State) error {

@@ -23,10 +23,7 @@ func openFolderButton(ui ui.UI) *widget.ToolbarAction {
 				ui.State.StatusBarTextChange("Folder selection cancelled")
 				return
 			}
-			path := reader.Path()
-
-			components.AddToSetlist(reader, ui.State)
-			components.LoadSong(path, ui.State)
+			components.AddSong(reader, ui.State)
 		}, ui.Window).Show()
 	})
 }

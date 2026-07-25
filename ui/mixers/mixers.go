@@ -9,12 +9,15 @@ import (
 )
 
 func Create(state *state.State) *container.Scroll {
+
 	mixers := container.NewHBox()
+
 	state.OnProjectChange(func(p model.Project) {
 		mixers.RemoveAll()
 		drawMixers(mixers, p.Channels)
 		mixers.Refresh()
 	})
+
 	return container.NewScroll(mixers)
 }
 

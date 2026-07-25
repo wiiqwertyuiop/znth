@@ -38,7 +38,7 @@ func createLayout(ui ui.UI) *fyne.Container {
 	)
 
 	// Start with left panel at 10% width
-	mainContent.SetOffset(0.10)
+	mainContent.SetOffset(0.20)
 
 	// Bottom status bar
 	statusBar := container.NewBorder(
