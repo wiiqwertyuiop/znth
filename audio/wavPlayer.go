@@ -25,7 +25,7 @@ func Initialize() {
 	portaudio.Initialize()
 }
 
-func StartStream(stems []model.Stem, state *state.State) {
+func StartStream(stems []*model.Stem, state *state.State) {
 
 	var err error
 	stream, err = portaudio.OpenDefaultStream(
@@ -56,11 +56,12 @@ func StartStream(stems []model.Stem, state *state.State) {
 				var left float32
 				var right float32
 
-				for _, val := range stems {
+				for i := 0; i < len(stems); i++ {
+					val := stems[i]
 
 					if position+1 < len(val.Data) {
-						left += val.Data[position] * val.VolumeAdjust
-						right += val.Data[position+1] * val.VolumeAdjust
+						left += float32(val.Data[position]) / 32768.0 * val.VolumeAdjust
+						right += float32(val.Data[position+1]) / 32768.0 * val.VolumeAdjust
 					}
 				}
 
@@ -131,7 +132,7 @@ func TogglePlay(state *state.State) {
 	}
 }
 
-func LoadWavFloat32(filename string) ([]float32, model.WavInfo, error) {
+func LoadWavInt16(filename string) ([]int16, model.WavInfo, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, model.WavInfo{}, err
@@ -208,18 +209,18 @@ func LoadWavFloat32(filename string) ([]float32, model.WavInfo, error) {
 
 READ_DATA:
 
-	if audioFormat != 3 {
+	if audioFormat != 1 {
 		return nil, info, fmt.Errorf(
-			"expected IEEE float WAV, got format %d",
+			"expected PCM WAV, got format %d",
 			audioFormat,
 		)
 	}
 
-	if dataSize%4 != 0 {
-		return nil, info, fmt.Errorf("invalid float data size")
+	if dataSize%2 != 0 {
+		return nil, info, fmt.Errorf("invalid int16 data size")
 	}
 
-	samples := make([]float32, dataSize/4)
+	samples := make([]int16, dataSize/2)
 
 	err = binary.Read(
 		file,
@@ -239,9 +240,11 @@ func KillStream(state *state.State) {
 		stream.Stop()
 		stream.Close()
 		stream = nil
-		position = 0
-		state.PlaybackChange(model.PlaybackStopped)
 	}
+
+	position = 0
+	state.Project.Channels.Stems = nil
+	state.PlaybackChange(model.PlaybackStopped)
 }
 
 func Shutdown() {

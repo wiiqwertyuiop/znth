@@ -12,7 +12,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func drawInstrument(stem *model.Stem) *fyne.Container {
+func drawInstrument(stem *model.Stem) (*fyne.Container, func()) {
 
 	defaultVolume := stem.VolumeAdjust
 
@@ -43,15 +43,19 @@ func drawInstrument(stem *model.Stem) *fyne.Container {
 	)
 
 	return container.NewStack(
-		border,
-		container.NewBorder(
-			nil,
-			nameLabel,
-			createMeterTicks(),
-			nil,
-			volume,
-		),
-	)
+			border,
+			container.NewBorder(
+				nil,
+				nameLabel,
+				createMeterTicks(),
+				nil,
+				volume,
+			),
+		), func() {
+			// Clean up function
+			volume.OnChanged = nil
+			volume = nil
+		}
 
 }
 

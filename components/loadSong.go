@@ -26,6 +26,14 @@ func LoadSong(path string, state *state.State) {
 	audio.StartStream(channels.Stems, state)
 	audio.Pause(state)
 
+	/* var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+
+	fmt.Printf("Alloc: %d MB\n", m.Alloc/1024/1024)
+	fmt.Printf("HeapAlloc: %d MB\n", m.HeapAlloc/1024/1024)
+	fmt.Printf("HeapInuse: %d MB\n", m.HeapInuse/1024/1024)
+	fmt.Printf("HeapSys: %d MB\n", m.HeapSys/1024/1024) */
+
 	state.StatusBarTextChange("Loaded succesfully! " + path)
 }
 

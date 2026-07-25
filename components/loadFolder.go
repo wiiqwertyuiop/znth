@@ -10,7 +10,7 @@ import (
 )
 
 func loadProjectFolder(folder string) model.Channels {
-	var stems []model.Stem
+	var stems []*model.Stem
 	var channels model.Channels
 
 	files, err := os.ReadDir(folder)
@@ -39,7 +39,7 @@ func loadProjectFolder(folder string) model.Channels {
 		if strings.ToLower(filepath.Ext(file.Name())) == ".wav" {
 			fullPath := filepath.Join(folder, file.Name())
 			println("Loading... ", fullPath)
-			data, info, err := audio.LoadWavFloat32(fullPath)
+			data, info, err := audio.LoadWavInt16(fullPath)
 			if err != nil {
 				//panic(err) // TODO
 				continue
@@ -51,7 +51,7 @@ func loadProjectFolder(folder string) model.Channels {
 				defaultVolume = savedVolume.VolumeAdjust
 			}
 
-			stem := model.Stem{
+			stem := &model.Stem{
 				Id:           file.Name(),
 				Data:         data,
 				Info:         info,
@@ -66,7 +66,7 @@ func loadProjectFolder(folder string) model.Channels {
 	return channels
 }
 
-func SaveStemData(path string, stems []model.Stem) error {
+func SaveStemData(path string, stems []*model.Stem) error {
 	project := model.SongSave{
 		Stems: make(map[string]model.SavedStemData),
 	}

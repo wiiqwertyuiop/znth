@@ -39,7 +39,7 @@ func (s *State) OnPlaybackChange(listener func(model.PlaybackState)) {
 func (s *State) SetProject(project model.Project) {
 	s.Project = project
 	for _, listener := range s.projectListeners {
-		listener(project)
+		listener(s.Project)
 	}
 }
 

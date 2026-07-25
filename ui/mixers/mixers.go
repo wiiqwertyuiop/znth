@@ -13,12 +13,23 @@ func Create(state *state.State) *container.Scroll {
 	mixers := container.NewHBox()
 	mixersScroll := container.NewScroll(mixers)
 
+	var cleanUpFunctions []func()
+
 	state.OnProjectChange(func(p model.Project) {
+
+		// cleanup old sliders
+		for _, cleanup := range cleanUpFunctions {
+			cleanup()
+		}
+		cleanUpFunctions = nil
+
 		mixers.RemoveAll()
-		drawMixers(mixers, p.Channels)
+
+		cleanUpFunctions = drawMixers(mixers, p.Channels)
+
 		mixers.Refresh()
 
-		// Reser scroll
+		// Reset scroll
 		mixersScroll.Offset = fyne.NewPos(0, 0)
 		mixersScroll.Refresh()
 	})
@@ -26,9 +37,18 @@ func Create(state *state.State) *container.Scroll {
 	return mixersScroll
 }
 
-func drawMixers(mixers *fyne.Container, channels model.Channels) {
+func drawMixers(mixers *fyne.Container, channels model.Channels) []func() {
+
+	var cleanUpFunctions []func()
+
 	mixers.Add(drawMaster(channels.MasterVolume))
+
 	for i := range channels.Stems {
-		mixers.Add(drawInstrument(&channels.Stems[i]))
+		channel, cleanup := drawInstrument(channels.Stems[i])
+
+		mixers.Add(channel)
+		cleanUpFunctions = append(cleanUpFunctions, cleanup)
 	}
+
+	return cleanUpFunctions
 }
