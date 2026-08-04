@@ -1,15 +1,19 @@
 package mainwindow
 
 import (
+	"image/color"
 	"znth/state"
 	"znth/ui"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/theme"
 )
 
 func Create(a fyne.App) {
 	// Window setup
 	w := a.NewWindow("Backing Track")
+	a.Settings().SetTheme(DarkTheme{})
+
 	w.CenterOnScreen()
 	w.RequestFocus()
 	w.Resize(fyne.NewSize(800, 500))
@@ -26,4 +30,22 @@ func Create(a fyne.App) {
 
 	// Show window
 	w.Show()
+}
+
+type DarkTheme struct{}
+
+func (DarkTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+	return theme.DefaultTheme().Color(name, theme.VariantDark)
+}
+
+func (DarkTheme) Font(style fyne.TextStyle) fyne.Resource {
+	return theme.DefaultTheme().Font(style)
+}
+
+func (DarkTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
+	return theme.DefaultTheme().Icon(name)
+}
+
+func (DarkTheme) Size(name fyne.ThemeSizeName) float32 {
+	return theme.DefaultTheme().Size(name)
 }
