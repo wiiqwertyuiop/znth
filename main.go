@@ -18,7 +18,7 @@ import (
 //
 // Optional:
 // tooltips
-// better meter ticks
+// better meter ticks - figure out how to match starting POS with DB. Make sliders matchup better
 //
 
 func main() {
