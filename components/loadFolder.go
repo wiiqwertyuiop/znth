@@ -46,7 +46,7 @@ func loadProjectFolder(folder string) model.Channels {
 			}
 
 			savedVolume, exists := savedStemData[file.Name()]
-			defaultVolume := audio.SliderToGain(50.0 / 100.0)
+			defaultVolume := audio.SliderToGain(55.0 / 100.0)
 			if exists {
 				defaultVolume = savedVolume.VolumeAdjust
 			}

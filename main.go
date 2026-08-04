@@ -11,6 +11,7 @@ import (
 // don't access event directly
 //	- add song event? load song event?
 //
+// Combined intrument and master UI componenets
 // Stem meters
 // Seeking
 // Change speed?
