@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 
+	"fyne.io/fyne/v2"
 	"github.com/gordonklaus/portaudio"
 )
 
@@ -82,7 +83,7 @@ func StartStream(stems []*model.Stem, state *state.State) {
 	go func() {
 		<-finishedChan
 
-		KillStream(state)
+		fyne.Do(func() { Stop(state) })
 	}()
 }
 
