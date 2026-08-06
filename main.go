@@ -13,7 +13,6 @@ import (
 //
 // Combined intrument and master UI componenets
 // Stem meters
-// Seeking
 // Change speed?
 //
 // Optional:
