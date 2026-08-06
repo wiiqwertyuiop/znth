@@ -8,6 +8,13 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func stopButton(state *state.State) *widget.ToolbarAction {
-	return widget.NewToolbarAction(theme.MediaStopIcon(), func() { audio.Stop(state) })
+func stopButton(state *state.State) *widget.Button {
+	button := widget.NewButtonWithIcon("", theme.MediaStopIcon(), func() {
+		audio.Stop(state)
+	})
+
+	// Optional: make it look more like a toolbar button
+	button.Importance = widget.LowImportance
+
+	return button
 }

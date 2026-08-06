@@ -9,17 +9,23 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-var playAction *widget.ToolbarAction
+var playButtonWidget *widget.Button
 
-func playButton(state *state.State) *widget.ToolbarAction {
-	playAction = widget.NewToolbarAction(theme.MediaPlayIcon(), func() { audio.TogglePlay(state) })
+func playButton(state *state.State) *widget.Button {
+	playButtonWidget = widget.NewButtonWithIcon("", theme.MediaPlayIcon(), func() {
+		audio.TogglePlay(state)
+	})
+
+	// Optional: make it look flatter like a toolbar button
+	playButtonWidget.Importance = widget.LowImportance
 
 	state.OnPlaybackChange(func(ps model.PlaybackState) {
 		if ps == model.PlaybackPlaying {
-			playAction.SetIcon(theme.MediaPauseIcon())
+			playButtonWidget.SetIcon(theme.MediaPauseIcon())
 		} else {
-			playAction.SetIcon(theme.MediaPlayIcon())
+			playButtonWidget.SetIcon(theme.MediaPlayIcon())
 		}
 	})
-	return playAction
+
+	return playButtonWidget
 }

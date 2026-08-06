@@ -10,8 +10,8 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func openFolderButton(ui ui.UI) *widget.ToolbarAction {
-	return widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
+func openFolderButton(ui ui.UI) *widget.Button {
+	button := widget.NewButtonWithIcon("", theme.FolderOpenIcon(), func() {
 		dialog.NewFolderOpen(func(reader fyne.ListableURI, err error) {
 
 			if err != nil {
@@ -23,7 +23,13 @@ func openFolderButton(ui ui.UI) *widget.ToolbarAction {
 				ui.State.StatusBarTextChange("Folder selection cancelled")
 				return
 			}
+
 			components.AddSong(reader, ui.State)
 		}, ui.Window).Show()
 	})
+
+	// Optional: make it look more like a toolbar button
+	button.Importance = widget.LowImportance
+
+	return button
 }
