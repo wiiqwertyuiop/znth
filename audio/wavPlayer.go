@@ -42,11 +42,7 @@ func StartStream(stems []*model.Stem, state *state.State) {
 					out[i] = 0
 				}
 
-				// Notify the goroutine
-				select {
-				case finishedChan <- true:
-				default:
-				}
+				fyne.Do(func() { Stop(state) })
 
 				return
 			}
@@ -80,13 +76,6 @@ func StartStream(stems []*model.Stem, state *state.State) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// Wait for playback to finish without blocking audio
-	go func() {
-		<-finishedChan
-
-		fyne.Do(func() { Stop(state) })
-	}()
 }
 
 func GetMasterVolume() float32 {
