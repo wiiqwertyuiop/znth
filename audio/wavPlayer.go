@@ -29,8 +29,6 @@ func StartStream(stems []*model.Stem, state *state.State) {
 
 	var err error
 
-	state.Playback.Length = int64(len(stems[0].Data)) / (48000 * 2)
-
 	stream, err = portaudio.OpenDefaultStream(
 		0, // input channels
 		2, // stereo

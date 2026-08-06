@@ -13,5 +13,4 @@ const (
 type Playback struct {
 	State    PlaybackState
 	Position atomic.Int64
-	Length   int64
 }

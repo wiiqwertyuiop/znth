@@ -13,23 +13,21 @@ import (
 
 func createSeeker(state *state.State) fyne.CanvasObject {
 	slider := widget.NewSlider(0, 100)
+	slider.Disable()
 
 	ticker := time.NewTicker(50 * time.Millisecond)
 
 	playBackTimeText := widget.NewLabel("3:42")
 
-	slider.OnChangeEnded = func(value float64) {
+	onChanged := func(value float64) {
 		targetSample := int64(value * 48000 * 2)
-
 		state.Playback.Position.Store(targetSample)
 	}
 
-	state.OnPlaybackChange(func(ps model.PlaybackState) {
-		if ps != model.PlaybackPlaying {
-			return
-		}
-		slider.Max = float64(state.Playback.Length)
+	state.OnProjectChange(func(p model.Project) {
+		slider.Max = float64(int64(len(p.Channels.Stems[0].Data)) / (48000 * 2))
 		slider.Value = 0
+		slider.Enable()
 		slider.Refresh()
 	})
 
@@ -44,7 +42,9 @@ func createSeeker(state *state.State) fyne.CanvasObject {
 			seconds := totalSeconds % 60
 
 			fyne.Do(func() {
+				slider.OnChanged = nil
 				slider.SetValue(float64(totalSeconds))
+				slider.OnChanged = onChanged
 				playBackTimeText.SetText(fmt.Sprintf("%d:%02d", minutes, seconds))
 			})
 		}
