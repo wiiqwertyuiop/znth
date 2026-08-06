@@ -13,11 +13,11 @@ import (
 //
 // Combined intrument and master UI componenets
 // Stem meters
-// Change speed?
-//
-// Optional:
 // tooltips
 // better meter ticks - figure out how to match starting POS with DB. Make sliders matchup better
+//
+// Optional:
+// Change speed?
 //
 
 func main() {
