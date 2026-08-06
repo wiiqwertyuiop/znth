@@ -47,11 +47,11 @@ func Create(ui ui.UI) *fyne.Container {
 	)
 
 	return container.NewBorder(
-		nil,            // top
-		nil,            // bottom
-		leftControls,   // left
-		nil,            // right
-		createSeeker(), // center
+		nil,                    // top
+		nil,                    // bottom
+		leftControls,           // left
+		nil,                    // right
+		createSeeker(ui.State), // center
 	)
 }
 

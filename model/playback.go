@@ -1,5 +1,7 @@
 package model
 
+import "sync/atomic"
+
 type PlaybackState string
 
 const (
@@ -9,5 +11,7 @@ const (
 )
 
 type Playback struct {
-	State PlaybackState
+	State    PlaybackState
+	Position atomic.Int64
+	Length   int64
 }

@@ -15,7 +15,6 @@ import (
 	"github.com/gordonklaus/portaudio"
 )
 
-var position = 0
 var masterVolume float32 = SliderToGain(30.0 / 100.0)
 
 var stream *portaudio.Stream = nil
@@ -29,6 +28,9 @@ func Initialize() {
 func StartStream(stems []*model.Stem, state *state.State) {
 
 	var err error
+
+	state.Playback.Length = int64(len(stems[0].Data)) / (48000 * 2)
+
 	stream, err = portaudio.OpenDefaultStream(
 		0, // input channels
 		2, // stereo
@@ -37,7 +39,7 @@ func StartStream(stems []*model.Stem, state *state.State) {
 		func(out []float32) {
 
 			// Check if playback finished
-			if position >= len(stems[0].Data) {
+			if state.Playback.Position.Load() >= int64(len(stems[0].Data)) {
 				for i := range out {
 					out[i] = 0
 				}
@@ -57,10 +59,12 @@ func StartStream(stems []*model.Stem, state *state.State) {
 				var left float32
 				var right float32
 
+				position := state.Playback.Position.Load()
+
 				for i := 0; i < len(stems); i++ {
 					val := stems[i]
 
-					if position+1 < len(val.Data) {
+					if position+1 < int64(len(val.Data)) {
 						left += float32(val.Data[position]) / 32768.0 * val.VolumeAdjust
 						right += float32(val.Data[position+1]) / 32768.0 * val.VolumeAdjust
 					}
@@ -70,7 +74,7 @@ func StartStream(stems []*model.Stem, state *state.State) {
 				out[i] = float32(math.Tanh(float64(left * masterVolume)))
 				out[i+1] = float32(math.Tanh(float64(right * masterVolume)))
 
-				position += 2
+				state.Playback.Position.Store(position + 2)
 			}
 		},
 	)
@@ -85,10 +89,6 @@ func StartStream(stems []*model.Stem, state *state.State) {
 
 		fyne.Do(func() { Stop(state) })
 	}()
-}
-
-func SetMusicPosition(pos int) {
-	position = pos
 }
 
 func GetMasterVolume() float32 {
@@ -120,7 +120,7 @@ func Pause(state *state.State) {
 func Stop(state *state.State) {
 	if IsStreamActive() {
 		state.PlaybackChange(model.PlaybackStopped)
-		SetMusicPosition(0)
+		state.Playback.Position.Store(0)
 		stream.Stop()
 	}
 }
@@ -243,7 +243,7 @@ func KillStream(state *state.State) {
 		stream = nil
 	}
 
-	position = 0
+	state.Playback.Position.Store(0)
 	state.Project.Channels.Stems = nil
 	state.PlaybackChange(model.PlaybackStopped)
 }
@@ -253,7 +253,6 @@ func Shutdown() {
 		stream.Stop()
 		stream.Close()
 		stream = nil
-		position = 0
 	}
 	portaudio.Terminate()
 }
