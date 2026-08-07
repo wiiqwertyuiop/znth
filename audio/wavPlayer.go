@@ -3,6 +3,7 @@ package audio
 import (
 	"math"
 	"znth/model"
+	"znth/state"
 
 	"encoding/binary"
 	"fmt"
@@ -10,21 +11,24 @@ import (
 	"log"
 	"os"
 
+	"fyne.io/fyne/v2"
 	"github.com/gordonklaus/portaudio"
 )
 
-var position = 0
 var masterVolume float32 = SliderToGain(30.0 / 100.0)
 
 var stream *portaudio.Stream = nil
 
 var finishedChan = make(chan bool)
 
-var playing = false
+func Initialize() {
+	portaudio.Initialize()
+}
 
-func StartStream(stems []model.Stem) {
+func StartStream(stems []*model.Stem, state *state.State) {
 
 	var err error
+
 	stream, err = portaudio.OpenDefaultStream(
 		0, // input channels
 		2, // stereo
@@ -33,30 +37,30 @@ func StartStream(stems []model.Stem) {
 		func(out []float32) {
 
 			// Check if playback finished
-			if position >= len(stems[0].Data) {
+			if state.Playback.Position.Load() >= int64(len(stems[0].Data)) {
 				for i := range out {
 					out[i] = 0
 				}
 
-				// Notify the goroutine
-				select {
-				case finishedChan <- true:
-				default:
-				}
+				fyne.Do(func() { Stop(state) })
 
 				return
 			}
 
+			// Start at 1 so we skip the master channel
 			for i := 0; i < len(out); i += 2 {
 
 				var left float32
 				var right float32
 
-				for _, val := range stems {
+				position := state.Playback.Position.Load()
 
-					if position+1 < len(val.Data) {
-						left += val.Data[position] * val.VolumeAdjust
-						right += val.Data[position+1] * val.VolumeAdjust
+				for i := 0; i < len(stems); i++ {
+					val := stems[i]
+
+					if position+1 < int64(len(val.Data)) {
+						left += float32(val.Data[position]) / 32768.0 * val.VolumeAdjust
+						right += float32(val.Data[position+1]) / 32768.0 * val.VolumeAdjust
 					}
 				}
 
@@ -64,7 +68,7 @@ func StartStream(stems []model.Stem) {
 				out[i] = float32(math.Tanh(float64(left * masterVolume)))
 				out[i+1] = float32(math.Tanh(float64(right * masterVolume)))
 
-				position += 2
+				state.Playback.Position.Store(position + 2)
 			}
 		},
 	)
@@ -72,17 +76,6 @@ func StartStream(stems []model.Stem) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// Wait for playback to finish without blocking audio
-	go func() {
-		<-finishedChan
-
-		KillStream()
-	}()
-}
-
-func SetMusicPosition(pos int) {
-	position = pos
 }
 
 func GetMasterVolume() float32 {
@@ -97,29 +90,37 @@ func IsStreamActive() bool {
 	return stream != nil
 }
 
-func Play() {
-	playing = true
-	stream.Start()
-}
-
-func Pause() {
-	playing = false
-	stream.Stop()
-}
-
-func TogglePlay() {
-	if !playing {
-		Play()
-	} else {
-		Pause()
+func Play(state *state.State) {
+	if IsStreamActive() {
+		state.PlaybackChange(model.PlaybackPlaying)
+		stream.Start()
 	}
 }
 
-func IsPlaying() bool {
-	return playing
+func Pause(state *state.State) {
+	if IsStreamActive() {
+		state.PlaybackChange(model.PlaybackPaused)
+		stream.Stop()
+	}
 }
 
-func LoadWavFloat32(filename string) ([]float32, model.WavInfo, error) {
+func Stop(state *state.State) {
+	if IsStreamActive() {
+		state.PlaybackChange(model.PlaybackStopped)
+		state.Playback.Position.Store(0)
+		stream.Stop()
+	}
+}
+
+func TogglePlay(state *state.State) {
+	if state.Playback.State != model.PlaybackPlaying {
+		Play(state)
+	} else {
+		Pause(state)
+	}
+}
+
+func LoadWavInt16(filename string) ([]int16, model.WavInfo, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, model.WavInfo{}, err
@@ -196,18 +197,18 @@ func LoadWavFloat32(filename string) ([]float32, model.WavInfo, error) {
 
 READ_DATA:
 
-	if audioFormat != 3 {
+	if audioFormat != 1 {
 		return nil, info, fmt.Errorf(
-			"expected IEEE float WAV, got format %d",
+			"expected PCM WAV, got format %d",
 			audioFormat,
 		)
 	}
 
-	if dataSize%4 != 0 {
-		return nil, info, fmt.Errorf("invalid float data size")
+	if dataSize%2 != 0 {
+		return nil, info, fmt.Errorf("invalid int16 data size")
 	}
 
-	samples := make([]float32, dataSize/4)
+	samples := make([]int16, dataSize/2)
 
 	err = binary.Read(
 		file,
@@ -222,12 +223,23 @@ READ_DATA:
 	return samples, info, nil
 }
 
-func KillStream() {
+func KillStream(state *state.State) {
 	if stream != nil {
 		stream.Stop()
 		stream.Close()
 		stream = nil
-		position = 0
-		playing = false
 	}
+
+	state.Playback.Position.Store(0)
+	state.Project.Channels.Stems = nil
+	state.PlaybackChange(model.PlaybackStopped)
+}
+
+func Shutdown() {
+	if IsStreamActive() {
+		stream.Stop()
+		stream.Close()
+		stream = nil
+	}
+	portaudio.Terminate()
 }

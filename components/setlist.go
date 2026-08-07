@@ -4,50 +4,21 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"slices"
 	"znth/model"
+	"znth/state"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/widget"
 )
 
-// Setlist data
-var songNames []model.SongDetails
-
-func CreateSetlist() *widget.List {
-	return widget.NewList(
-		func() int {
-			return len(songNames)
-		},
-		func() fyne.CanvasObject {
-			label := widget.NewLabel("")
-			label.Wrapping = fyne.TextWrap(fyne.TextTruncateClip)
-			label.TextStyle.Bold = true
-			return label
-		},
-		func(i widget.ListItemID, o fyne.CanvasObject) {
-			o.(*widget.Label).SetText(songNames[i].Name)
-		},
-	)
-}
-
-func AddToSetlist(reader fyne.ListableURI) {
-	song := model.SongDetails{
-		Name:     reader.Name(),
-		Location: reader.Path(),
-	}
-	songNames = slices.Insert(songNames, 0, song)
-}
-
 // TODO ERROR HANDLING, CHECK NIL, ETC.
-func SaveSetlist(writer fyne.URIWriteCloser) error {
+func SaveSetlist(writer fyne.URIWriteCloser, state *state.State) error {
 	if writer == nil {
 		return errors.New("Folder selection cancelled")
 	}
 
 	defer writer.Close() // Ensure the file is closed to finalize the write
 
-	setlistData := model.Setlist{Data: songNames}
+	setlistData := model.Setlist{Data: state.Project.SongNames}
 
 	// Example: Marshaling a Setlist slice to JSON
 	data, err := json.Marshal(setlistData)
@@ -63,7 +34,7 @@ func SaveSetlist(writer fyne.URIWriteCloser) error {
 	return nil
 }
 
-func OpenSetlist(reader fyne.URIReadCloser) error {
+func OpenSetlist(reader fyne.URIReadCloser, state *state.State) error {
 	if reader == nil {
 		return errors.New("Action canceled")
 	}
@@ -81,10 +52,7 @@ func OpenSetlist(reader fyne.URIReadCloser) error {
 		return err
 	}
 
-	songNames = setlist.Data
+	state.Project.SongNames = setlist.Data
+	LoadSong(setlist.Data[0].Location, state)
 	return nil
-}
-
-func GetSong(id int) model.SongDetails {
-	return songNames[id]
 }
