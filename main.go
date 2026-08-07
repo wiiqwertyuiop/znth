@@ -8,13 +8,15 @@ import (
 )
 
 // TODO:
-// don't access event directly
-//	- add song event? load song event?
+// tooltips
+//
+// massive code clean up
 //
 // Combined intrument and master UI componenets
-// Stem meters
-// tooltips
 // better meter ticks - figure out how to match starting POS with DB. Make sliders matchup better
+//
+// don't access event directly
+//	- add song event? load song event?
 //
 // Optional:
 // Change speed?
