@@ -48,7 +48,7 @@ func Create(state *state.State) fyne.CanvasObject {
 		components.LoadSong(path, state)
 	}
 
-	state.OnProjectChange(func(p model.Project) {
+	state.OnProjectChange(func(p *model.Project) {
 		setlist.Refresh()
 	})
 

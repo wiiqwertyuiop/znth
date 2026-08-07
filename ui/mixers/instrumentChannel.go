@@ -2,6 +2,7 @@ package mixers
 
 import (
 	"image/color"
+	"math"
 	"strings"
 	"znth/audio"
 	"znth/model"
@@ -12,7 +13,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func drawInstrument(stem *model.Stem) (*fyne.Container, func()) {
+func drawInstrument(stem *model.Stem, project *model.Project) (*fyne.Container, func()) {
 
 	defaultVolume := stem.VolumeAdjust
 
@@ -20,6 +21,13 @@ func drawInstrument(stem *model.Stem) (*fyne.Container, func()) {
 	volume.OnChanged = func(v float64) {
 		stem.VolumeAdjust = audio.SliderToGain(v / 100.0)
 	}
+
+	project.AddToProjectRenderLoop(func() {
+		fyne.Do(func() {
+			peak := math.Float32frombits(stem.Peak.Load())
+			volume.UpdatePeak(peak)
+		})
+	})
 
 	border := canvas.NewRectangle(color.NRGBA{
 		R: 60,
