@@ -23,8 +23,8 @@ func drawInstrument(stem *model.Stem, project *model.Project) (*fyne.Container, 
 	}
 
 	project.AddToProjectRenderLoop(func() {
+		peak := math.Float32frombits(stem.Peak.Load())
 		fyne.Do(func() {
-			peak := math.Float32frombits(stem.Peak.Load())
 			volume.UpdatePeak(peak)
 		})
 	})

@@ -14,7 +14,9 @@ func (p *Project) AddToProjectRenderLoop(f func()) {
 
 func (p *Project) RenderProjectElements() {
 	for _, listener := range p.projectRenderLoopListeners {
-		listener()
+		if listener != nil {
+			listener()
+		}
 	}
 }
 
