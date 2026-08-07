@@ -9,6 +9,8 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 )
 
+var fullscreen = false
+
 func addShortCuts(ui ui.UI) {
 	ctrlS_Shortcut := &desktop.CustomShortcut{
 		KeyName:  fyne.KeyS,
@@ -26,6 +28,10 @@ func addShortCuts(ui ui.UI) {
 		switch ev.Name {
 		case fyne.KeySpace:
 			audio.TogglePlay(ui.State)
+		case fyne.KeyF11:
+			fullscreen = !fullscreen
+			ui.Window.SetFullScreen(fullscreen)
 		}
+
 	})
 }
