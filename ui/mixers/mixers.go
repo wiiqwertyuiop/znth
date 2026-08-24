@@ -15,7 +15,7 @@ func Create(state *state.State) *container.Scroll {
 
 	var cleanUpFunctions []func()
 
-	state.OnProjectChange(func(p model.Project) {
+	state.OnProjectChange(func(p *model.Project) {
 
 		// cleanup old sliders
 		for _, cleanup := range cleanUpFunctions {
@@ -25,7 +25,7 @@ func Create(state *state.State) *container.Scroll {
 
 		mixers.RemoveAll()
 
-		cleanUpFunctions = drawMixers(mixers, p.Channels)
+		cleanUpFunctions = drawMixers(mixers, p)
 
 		mixers.Refresh()
 
@@ -37,14 +37,14 @@ func Create(state *state.State) *container.Scroll {
 	return mixersScroll
 }
 
-func drawMixers(mixers *fyne.Container, channels model.Channels) []func() {
+func drawMixers(mixers *fyne.Container, project *model.Project) []func() {
 
 	var cleanUpFunctions []func()
 
-	mixers.Add(drawMaster(channels.MasterVolume))
+	mixers.Add(drawMaster(project))
 
-	for i := range channels.Stems {
-		channel, cleanup := drawInstrument(channels.Stems[i])
+	for i := range project.Channels.Stems {
+		channel, cleanup := drawInstrument(project.Channels.Stems[i], project)
 
 		mixers.Add(channel)
 		cleanUpFunctions = append(cleanUpFunctions, cleanup)

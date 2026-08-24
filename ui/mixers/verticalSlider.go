@@ -16,12 +16,16 @@ type VerticalSlider struct {
 	Max   float64
 	Value float64
 
+	Peak           float32
+	PeakHoldFrames int
+
 	OnChanged func(float64)
 }
 
 type verticalSliderRenderer struct {
 	slider  *VerticalSlider
 	track   *canvas.Rectangle
+	peak    *canvas.Rectangle
 	thumb   *fyne.Container
 	objects []fyne.CanvasObject
 }
@@ -62,10 +66,70 @@ func (s *VerticalSlider) DragEnd() {}
 func (r *verticalSliderRenderer) Refresh() {
 	r.Layout(r.slider.Size())
 
+	trackWidth := float32(6)
+
+	peakHeight := r.slider.Peak * r.slider.Size().Height
+
+	r.peak.Resize(fyne.NewSize(
+		trackWidth,
+		peakHeight,
+	))
+
+	r.peak.Move(fyne.NewPos(
+		(r.slider.Size().Width-trackWidth-10)/2,
+		r.slider.Size().Height-peakHeight,
+	))
+
 	canvas.Refresh(r.track)
+	canvas.Refresh(r.peak)
 	canvas.Refresh(r.thumb)
 }
+
 func (r *verticalSliderRenderer) Destroy() {}
+
+func (s *VerticalSlider) UpdatePeak(input float32) {
+
+	if s == nil {
+		return
+	}
+
+	if input < 0 {
+		s.Peak = 0
+		s.Refresh()
+		return
+	}
+
+	const threshold = float32(0.1)
+
+	if input > s.Peak {
+		// Fast attack
+		s.Peak = input
+		s.PeakHoldFrames = 2
+		return
+	}
+
+	// Non-linear decay
+	decay := float32(0.97)
+
+	// Hold if the signal is still close
+	if s.Peak-input < threshold {
+		decay = float32(0.99)
+	}
+
+	if s.Peak < 0.2 {
+		decay = 0.85
+	} else if s.Peak < 0.5 {
+		decay = 0.90
+	}
+
+	s.Peak *= decay
+
+	if s.Peak < 0.001 {
+		s.Peak = 0
+	}
+
+	s.Refresh()
+}
 
 func (s *VerticalSlider) Dragged(e *fyne.DragEvent) {
 	size := s.Size()
@@ -106,6 +170,7 @@ func newVerticalSlider(min, max float64, init float64) *VerticalSlider {
 
 func (s *VerticalSlider) CreateRenderer() fyne.WidgetRenderer {
 	track := canvas.NewRectangle(color.RGBA{R: 255, G: 255, B: 255, A: 80})
+	peak := canvas.NewRectangle(color.RGBA{R: 0, G: 255, B: 0, A: 80})
 
 	rect := canvas.NewRectangle(color.RGBA{R: 255, G: 255, B: 255, A: 200})
 	rect.CornerRadius = 10
@@ -124,9 +189,11 @@ func (s *VerticalSlider) CreateRenderer() fyne.WidgetRenderer {
 	return &verticalSliderRenderer{
 		slider: s,
 		track:  track,
+		peak:   peak,
 		thumb:  thumb,
 		objects: []fyne.CanvasObject{
 			track,
+			peak,
 			thumb,
 		},
 	}

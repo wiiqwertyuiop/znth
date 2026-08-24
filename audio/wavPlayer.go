@@ -28,47 +28,66 @@ func Initialize() {
 func StartStream(stems []*model.Stem, state *state.State) {
 
 	var err error
+	stemPeaks := make([]float32, len(stems))
 
 	stream, err = portaudio.OpenDefaultStream(
-		0, // input channels
-		2, // stereo
+		0,
+		2,
 		float64(stems[0].Info.SampleRate),
 		512,
 		func(out []float32) {
 
-			// Check if playback finished
-			if state.Playback.Position.Load() >= int64(len(stems[0].Data)) {
+			position := state.Playback.Position.Load()
+			clear(stemPeaks)
+
+			if position >= int64(len(stems[0].Data)) {
 				for i := range out {
 					out[i] = 0
 				}
 
 				fyne.Do(func() { Stop(state) })
-
 				return
 			}
 
-			// Start at 1 so we skip the master channel
 			for i := 0; i < len(out); i += 2 {
 
 				var left float32
 				var right float32
 
-				position := state.Playback.Position.Load()
+				samplePosition := position + int64(i)
 
-				for i := 0; i < len(stems); i++ {
-					val := stems[i]
+				for index, stem := range stems {
 
-					if position+1 < int64(len(val.Data)) {
-						left += float32(val.Data[position]) / 32768.0 * val.VolumeAdjust
-						right += float32(val.Data[position+1]) / 32768.0 * val.VolumeAdjust
+					if samplePosition+1 < int64(len(stem.Data)) {
+
+						stemLeft := float32(stem.Data[samplePosition]) / 32768.0 * stem.VolumeAdjust
+						stemRight := float32(stem.Data[samplePosition+1]) / 32768.0 * stem.VolumeAdjust
+
+						// Track this stem's peak
+						peak := float32(math.Max(
+							math.Abs(float64(stemLeft)),
+							math.Abs(float64(stemRight)),
+						))
+
+						if peak > stemPeaks[index] {
+							stemPeaks[index] = peak
+						}
+
+						// Mix
+						left += stemLeft
+						right += stemRight
 					}
 				}
 
-				// master volume
 				out[i] = float32(math.Tanh(float64(left * masterVolume)))
 				out[i+1] = float32(math.Tanh(float64(right * masterVolume)))
 
-				state.Playback.Position.Store(position + 2)
+				state.Playback.Position.Store(position + int64(len(out)))
+			}
+
+			// Store peaks once per buffer
+			for i, stem := range stems {
+				stem.Peak.Store(math.Float32bits(stemPeaks[i]))
 			}
 		},
 	)
@@ -101,6 +120,9 @@ func Pause(state *state.State) {
 	if IsStreamActive() {
 		state.PlaybackChange(model.PlaybackPaused)
 		stream.Stop()
+		for _, stem := range state.Project.Channels.Stems {
+			stem.Peak.Store(math.Float32bits(0))
+		}
 	}
 }
 
@@ -109,6 +131,9 @@ func Stop(state *state.State) {
 		state.PlaybackChange(model.PlaybackStopped)
 		state.Playback.Position.Store(0)
 		stream.Stop()
+		for _, stem := range state.Project.Channels.Stems {
+			stem.Peak.Store(math.Float32bits(-1))
+		}
 	}
 }
 
