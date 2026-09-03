@@ -3,6 +3,8 @@ package state
 import (
 	"time"
 	"znth/model"
+
+	"fyne.io/fyne/v2/dialog"
 )
 
 type State struct {
@@ -16,8 +18,11 @@ type State struct {
 	mainWindowRenderLoopListeners []func()
 }
 
-func New() *State {
+var loadingPopup *dialog.CustomDialog
+
+func New(dialog *dialog.CustomDialog) *State {
 	newState := &State{}
+	loadingPopup = dialog
 	ticker := time.NewTicker(50 * time.Millisecond)
 	go func() {
 		for range ticker.C {
@@ -28,6 +33,14 @@ func New() *State {
 		}
 	}()
 	return newState
+}
+
+func (s *State) IsLoading(isLoading bool) {
+	if isLoading {
+		loadingPopup.Show()
+	} else {
+		loadingPopup.Hide()
+	}
 }
 
 func (s *State) OnMainWindowRenderLoop(f func()) {

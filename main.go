@@ -1,9 +1,13 @@
 package main
 
 import (
+	_ "embed"
+
+	"fmt"
 	"znth/audio"
 	"znth/ui/mainwindow"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 )
 
@@ -22,8 +26,23 @@ import (
 // Change speed?
 //
 
+//go:embed Icon.png
+var iconData []byte
+
 func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("PANIC: %v\n", r)
+			fmt.Println("Press Enter to exit...")
+			fmt.Scanln()
+		}
+	}()
+
 	fyneApp := app.NewWithID("com.znth.znth")
+
+	fyneApp.SetIcon(
+		fyne.NewStaticResource("Icon.png", iconData),
+	)
 
 	// Initialize audio
 	audio.Initialize()

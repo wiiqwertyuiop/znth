@@ -11,58 +11,72 @@ import (
 
 func LoadSong(path string, state *state.State) {
 	audio.KillStream(state)
-	state.StatusBarTextChange("Loading files... " + path)
+	fyne.Do(func() {
+		state.StatusBarTextChange("Loading files... " + path)
+		state.IsLoading(true)
+	})
 
-	channels := loadProjectFolder(path)
+	go func() {
+		channels := loadProjectFolder(path)
 
-	project := model.Project{
-		Channels:        channels,
-		CurrentSongPath: path,
-		SongNames:       state.Project.SongNames,
-	}
+		project := model.Project{
+			Channels:        channels,
+			CurrentSongPath: path,
+			SongNames:       state.Project.SongNames,
+		}
 
-	state.SetProject(project)
+		/* var m runtime.MemStats
+		runtime.ReadMemStats(&m)
 
-	audio.StartStream(channels.Stems, state)
-	audio.Pause(state)
+		fmt.Printf("Alloc: %d MB\n", m.Alloc/1024/1024)
+		fmt.Printf("HeapAlloc: %d MB\n", m.HeapAlloc/1024/1024)
+		fmt.Printf("HeapInuse: %d MB\n", m.HeapInuse/1024/1024)
+		fmt.Printf("HeapSys: %d MB\n", m.HeapSys/1024/1024) */
+		fyne.DoAndWait(func() {
+			state.SetProject(project)
+			state.IsLoading(false)
+			state.StatusBarTextChange("Loaded successfully! " + path)
+		})
 
-	/* var m runtime.MemStats
-	runtime.ReadMemStats(&m)
+		audio.StartStream(channels.Stems, state)
+		audio.Pause(state)
+	}()
 
-	fmt.Printf("Alloc: %d MB\n", m.Alloc/1024/1024)
-	fmt.Printf("HeapAlloc: %d MB\n", m.HeapAlloc/1024/1024)
-	fmt.Printf("HeapInuse: %d MB\n", m.HeapInuse/1024/1024)
-	fmt.Printf("HeapSys: %d MB\n", m.HeapSys/1024/1024) */
-
-	state.StatusBarTextChange("Loaded succesfully! " + path)
 }
 
 func AddSong(reader fyne.ListableURI, state *state.State) {
 	path := reader.Path()
 
 	audio.KillStream(state)
-	state.StatusBarTextChange("Loading files... " + path)
+	fyne.Do(func() {
+		state.StatusBarTextChange("Loading files... " + path)
+		state.IsLoading(true)
+	})
 
-	channels := loadProjectFolder(path)
+	go func() {
+		channels := loadProjectFolder(path)
 
-	song := model.SongDetails{
-		Name:     reader.Name(),
-		Location: path,
-	}
+		song := model.SongDetails{
+			Name:     reader.Name(),
+			Location: path,
+		}
 
-	// TODO: dont modify state like this
-	state.Project.SongNames = slices.Insert(state.Project.SongNames, 0, song)
+		// TODO: dont modify state like this
+		state.Project.SongNames = slices.Insert(state.Project.SongNames, 0, song)
 
-	project := model.Project{
-		Channels:        channels,
-		CurrentSongPath: path,
-		SongNames:       state.Project.SongNames,
-	}
+		project := model.Project{
+			Channels:        channels,
+			CurrentSongPath: path,
+			SongNames:       state.Project.SongNames,
+		}
 
-	state.SetProject(project)
+		fyne.DoAndWait(func() {
+			state.SetProject(project)
+			state.IsLoading(false)
+			state.StatusBarTextChange("Loaded successfully! " + path)
+		})
 
-	audio.StartStream(channels.Stems, state)
-	audio.Pause(state)
-
-	state.StatusBarTextChange("Loaded succesfully! " + path)
+		audio.StartStream(channels.Stems, state)
+		audio.Pause(state)
+	}()
 }

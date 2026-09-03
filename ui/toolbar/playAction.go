@@ -5,6 +5,7 @@ import (
 	"znth/model"
 	"znth/state"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -20,11 +21,13 @@ func playButton(state *state.State) *widget.Button {
 	playButtonWidget.Importance = widget.LowImportance
 
 	state.OnPlaybackChange(func(ps model.PlaybackState) {
-		if ps == model.PlaybackPlaying {
-			playButtonWidget.SetIcon(theme.MediaPauseIcon())
-		} else {
-			playButtonWidget.SetIcon(theme.MediaPlayIcon())
-		}
+		fyne.Do(func() {
+			if ps == model.PlaybackPlaying {
+				playButtonWidget.SetIcon(theme.MediaPauseIcon())
+			} else {
+				playButtonWidget.SetIcon(theme.MediaPlayIcon())
+			}
+		})
 	})
 
 	return playButtonWidget
