@@ -11,8 +11,10 @@ import (
 
 func LoadSong(path string, state *state.State) {
 	audio.KillStream(state)
-	state.StatusBarTextChange("Loading files... " + path)
-	state.IsLoading(true)
+	fyne.Do(func() {
+		state.StatusBarTextChange("Loading files... " + path)
+		state.IsLoading(true)
+	})
 
 	go func() {
 		channels := loadProjectFolder(path)
@@ -23,11 +25,6 @@ func LoadSong(path string, state *state.State) {
 			SongNames:       state.Project.SongNames,
 		}
 
-		state.SetProject(project)
-
-		audio.StartStream(channels.Stems, state)
-		audio.Pause(state)
-
 		/* var m runtime.MemStats
 		runtime.ReadMemStats(&m)
 
@@ -35,9 +32,14 @@ func LoadSong(path string, state *state.State) {
 		fmt.Printf("HeapAlloc: %d MB\n", m.HeapAlloc/1024/1024)
 		fmt.Printf("HeapInuse: %d MB\n", m.HeapInuse/1024/1024)
 		fmt.Printf("HeapSys: %d MB\n", m.HeapSys/1024/1024) */
+		fyne.DoAndWait(func() {
+			state.SetProject(project)
+			state.IsLoading(false)
+			state.StatusBarTextChange("Loaded successfully! " + path)
+		})
 
-		state.IsLoading(false)
-		state.StatusBarTextChange("Loaded succesfully! " + path)
+		audio.StartStream(channels.Stems, state)
+		audio.Pause(state)
 	}()
 
 }
@@ -46,8 +48,10 @@ func AddSong(reader fyne.ListableURI, state *state.State) {
 	path := reader.Path()
 
 	audio.KillStream(state)
-	state.StatusBarTextChange("Loading files... " + path)
-	state.IsLoading(true)
+	fyne.Do(func() {
+		state.StatusBarTextChange("Loading files... " + path)
+		state.IsLoading(true)
+	})
 
 	go func() {
 		channels := loadProjectFolder(path)
@@ -66,12 +70,13 @@ func AddSong(reader fyne.ListableURI, state *state.State) {
 			SongNames:       state.Project.SongNames,
 		}
 
-		state.SetProject(project)
+		fyne.DoAndWait(func() {
+			state.SetProject(project)
+			state.IsLoading(false)
+			state.StatusBarTextChange("Loaded successfully! " + path)
+		})
 
 		audio.StartStream(channels.Stems, state)
 		audio.Pause(state)
-
-		state.IsLoading(false)
-		state.StatusBarTextChange("Loaded succesfully! " + path)
 	}()
 }
