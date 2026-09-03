@@ -12,29 +12,34 @@ import (
 func LoadSong(path string, state *state.State) {
 	audio.KillStream(state)
 	state.StatusBarTextChange("Loading files... " + path)
+	state.IsLoading(true)
 
-	channels := loadProjectFolder(path)
+	go func() {
+		channels := loadProjectFolder(path)
 
-	project := model.Project{
-		Channels:        channels,
-		CurrentSongPath: path,
-		SongNames:       state.Project.SongNames,
-	}
+		project := model.Project{
+			Channels:        channels,
+			CurrentSongPath: path,
+			SongNames:       state.Project.SongNames,
+		}
 
-	state.SetProject(project)
+		state.SetProject(project)
 
-	audio.StartStream(channels.Stems, state)
-	audio.Pause(state)
+		audio.StartStream(channels.Stems, state)
+		audio.Pause(state)
 
-	/* var m runtime.MemStats
-	runtime.ReadMemStats(&m)
+		/* var m runtime.MemStats
+		runtime.ReadMemStats(&m)
 
-	fmt.Printf("Alloc: %d MB\n", m.Alloc/1024/1024)
-	fmt.Printf("HeapAlloc: %d MB\n", m.HeapAlloc/1024/1024)
-	fmt.Printf("HeapInuse: %d MB\n", m.HeapInuse/1024/1024)
-	fmt.Printf("HeapSys: %d MB\n", m.HeapSys/1024/1024) */
+		fmt.Printf("Alloc: %d MB\n", m.Alloc/1024/1024)
+		fmt.Printf("HeapAlloc: %d MB\n", m.HeapAlloc/1024/1024)
+		fmt.Printf("HeapInuse: %d MB\n", m.HeapInuse/1024/1024)
+		fmt.Printf("HeapSys: %d MB\n", m.HeapSys/1024/1024) */
 
-	state.StatusBarTextChange("Loaded succesfully! " + path)
+		state.IsLoading(false)
+		state.StatusBarTextChange("Loaded succesfully! " + path)
+	}()
+
 }
 
 func AddSong(reader fyne.ListableURI, state *state.State) {
@@ -42,27 +47,31 @@ func AddSong(reader fyne.ListableURI, state *state.State) {
 
 	audio.KillStream(state)
 	state.StatusBarTextChange("Loading files... " + path)
+	state.IsLoading(true)
 
-	channels := loadProjectFolder(path)
+	go func() {
+		channels := loadProjectFolder(path)
 
-	song := model.SongDetails{
-		Name:     reader.Name(),
-		Location: path,
-	}
+		song := model.SongDetails{
+			Name:     reader.Name(),
+			Location: path,
+		}
 
-	// TODO: dont modify state like this
-	state.Project.SongNames = slices.Insert(state.Project.SongNames, 0, song)
+		// TODO: dont modify state like this
+		state.Project.SongNames = slices.Insert(state.Project.SongNames, 0, song)
 
-	project := model.Project{
-		Channels:        channels,
-		CurrentSongPath: path,
-		SongNames:       state.Project.SongNames,
-	}
+		project := model.Project{
+			Channels:        channels,
+			CurrentSongPath: path,
+			SongNames:       state.Project.SongNames,
+		}
 
-	state.SetProject(project)
+		state.SetProject(project)
 
-	audio.StartStream(channels.Stems, state)
-	audio.Pause(state)
+		audio.StartStream(channels.Stems, state)
+		audio.Pause(state)
 
-	state.StatusBarTextChange("Loaded succesfully! " + path)
+		state.IsLoading(false)
+		state.StatusBarTextChange("Loaded succesfully! " + path)
+	}()
 }

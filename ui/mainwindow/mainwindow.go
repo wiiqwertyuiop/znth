@@ -6,7 +6,9 @@ import (
 	"znth/ui"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 )
 
 func Create(a fyne.App) {
@@ -19,7 +21,11 @@ func Create(a fyne.App) {
 	w.Resize(fyne.NewSize(800, 500))
 
 	// Create window state
-	state := state.New()
+	state := state.New(dialog.NewCustomWithoutButtons(
+		"Loading...",
+		widget.NewProgressBarInfinite(),
+		w,
+	))
 
 	// Bind state to window
 	ui := ui.UI{Window: w, State: state}

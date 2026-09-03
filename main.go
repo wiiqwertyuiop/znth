@@ -1,9 +1,11 @@
 package main
 
 import (
+	"os"
 	"znth/audio"
 	"znth/ui/mainwindow"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 )
 
@@ -24,6 +26,13 @@ import (
 
 func main() {
 	fyneApp := app.NewWithID("com.znth.znth")
+
+	data, err := os.ReadFile("Icon.png")
+	if err != nil {
+		panic(err)
+	}
+
+	fyneApp.SetIcon(fyne.NewStaticResource("Icon.png", data))
 
 	// Initialize audio
 	audio.Initialize()
